@@ -307,7 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Build a shareable URL that points to this activity
   function getActivityShareUrl(activityName) {
-    const shareUrl = new URL("/static/index.html", window.location.origin);
+    const shareUrl = new URL(window.location.pathname, window.location.origin);
     shareUrl.searchParams.set("activity", activityName);
     return shareUrl.toString();
   }
@@ -334,7 +334,8 @@ document.addEventListener("DOMContentLoaded", () => {
       document.body.appendChild(textArea);
       textArea.focus();
       textArea.select();
-      // Deprecated API kept as a compatibility fallback for older browsers.
+      // Deprecated API kept as a fallback when Clipboard API is unavailable.
+      // This handles older browsers or non-secure contexts.
       const copied = document.execCommand("copy");
       document.body.removeChild(textArea);
       return copied;
