@@ -318,6 +318,15 @@ document.addEventListener("DOMContentLoaded", () => {
     )}.`;
   }
 
+  // Escape values before inserting into HTML attributes
+  function escapeHtmlAttribute(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
   // Copy text to clipboard with fallback for older browsers
   async function copyToClipboard(text) {
     try {
@@ -541,6 +550,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const shareText = getActivityShareText(name, details);
     const encodedShareUrl = encodeURIComponent(shareUrl);
     const encodedShareText = encodeURIComponent(shareText);
+    const safeEncodedShareUrl = escapeHtmlAttribute(encodedShareUrl);
+    const safeEncodedShareText = escapeHtmlAttribute(encodedShareText);
 
     // Create activity tag
     const tagHtml = `
@@ -606,7 +617,7 @@ document.addEventListener("DOMContentLoaded", () => {
           </button>
           <a
             class="share-button social-share-link"
-            href="https://x.com/intent/tweet?text=${encodedShareText}&url=${encodedShareUrl}"
+            href="https://x.com/intent/tweet?text=${safeEncodedShareText}&url=${safeEncodedShareUrl}"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Share ${name} on X"
@@ -615,7 +626,7 @@ document.addEventListener("DOMContentLoaded", () => {
           </a>
           <a
             class="share-button social-share-link"
-            href="https://www.facebook.com/sharer/sharer.php?u=${encodedShareUrl}"
+            href="https://www.facebook.com/sharer/sharer.php?u=${safeEncodedShareUrl}"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Share ${name} on Facebook"
@@ -683,6 +694,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
           } catch (error) {
             if (error.name !== "AbortError") {
+              console.error("Native share failed:", error);
               showMessage("Unable to open share options right now.", "error");
             }
           }
