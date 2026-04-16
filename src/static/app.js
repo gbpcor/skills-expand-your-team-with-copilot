@@ -333,6 +333,7 @@ document.addEventListener("DOMContentLoaded", () => {
       document.body.appendChild(textArea);
       textArea.focus();
       textArea.select();
+      // Deprecated API kept as a compatibility fallback for older browsers.
       const copied = document.execCommand("copy");
       document.body.removeChild(textArea);
       return copied;
