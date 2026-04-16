@@ -6,6 +6,7 @@ A super simple website application that allows students to view and sign up for 
 
 - View all available extracurricular activities
 - Sign up for activities
+- Toggle between light mode and dark mode using the button in the top-right corner
 
 ## Development Guide
 
