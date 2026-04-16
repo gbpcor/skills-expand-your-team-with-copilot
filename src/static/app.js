@@ -334,8 +334,8 @@ document.addEventListener("DOMContentLoaded", () => {
       document.body.appendChild(textArea);
       textArea.focus();
       textArea.select();
-      // Deprecated API kept as a fallback when Clipboard API is unavailable.
-      // This handles older browsers or non-secure contexts.
+      // Legacy fallback for older browsers or non-secure contexts
+      // where navigator.clipboard is unavailable.
       const copied = document.execCommand("copy");
       document.body.removeChild(textArea);
       return copied;
@@ -701,6 +701,8 @@ document.addEventListener("DOMContentLoaded", () => {
             if (error.name !== "AbortError") {
               console.error("Native share failed:", error);
               showMessage("Unable to open share options right now.", "error");
+            } else {
+              // AbortError means the user closed the share dialog intentionally.
             }
           }
         });
