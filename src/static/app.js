@@ -304,6 +304,44 @@ document.addEventListener("DOMContentLoaded", () => {
     return details.schedule;
   }
 
+  // Build a shareable URL that points to this activity
+  function getActivityShareUrl(activityName) {
+    const shareUrl = new URL("/static/index.html", window.location.origin);
+    shareUrl.searchParams.set("activity", activityName);
+    return shareUrl.toString();
+  }
+
+  // Build share text for an activity
+  function getActivityShareText(activityName, details) {
+    return `Check out ${activityName} at Mergington High School! ${formatSchedule(
+      details
+    )}.`;
+  }
+
+  // Copy text to clipboard with fallback for older browsers
+  async function copyToClipboard(text) {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      const copied = document.execCommand("copy");
+      document.body.removeChild(textArea);
+      return copied;
+    } catch (error) {
+      console.error("Failed to copy share link:", error);
+      return false;
+    }
+  }
+
   // Function to determine activity type (this would ideally come from backend)
   function getActivityType(activityName, description) {
     const name = activityName.toLowerCase();
@@ -498,6 +536,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Format the schedule using the new helper function
     const formattedSchedule = formatSchedule(details);
+    const shareUrl = getActivityShareUrl(name);
+    const shareText = getActivityShareText(name, details);
+    const encodedShareUrl = encodeURIComponent(shareUrl);
+    const encodedShareText = encodeURIComponent(shareText);
 
     // Create activity tag
     const tagHtml = `
@@ -552,6 +594,35 @@ document.addEventListener("DOMContentLoaded", () => {
             .join("")}
         </ul>
       </div>
+      <div class="activity-share">
+        <div class="share-label">Share this activity:</div>
+        <div class="share-buttons">
+          <button class="share-button native-share-button" data-activity="${name}" type="button">
+            Share
+          </button>
+          <button class="share-button copy-share-button" data-activity="${name}" type="button">
+            Copy Link
+          </button>
+          <a
+            class="share-button social-share-link"
+            href="https://x.com/intent/tweet?text=${encodedShareText}&url=${encodedShareUrl}"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Share ${name} on X"
+          >
+            X
+          </a>
+          <a
+            class="share-button social-share-link"
+            href="https://www.facebook.com/sharer/sharer.php?u=${encodedShareUrl}"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Share ${name} on Facebook"
+          >
+            Facebook
+          </a>
+        </div>
+      </div>
       <div class="activity-card-actions">
         ${
           currentUser
@@ -584,6 +655,39 @@ document.addEventListener("DOMContentLoaded", () => {
         registerButton.addEventListener("click", () => {
           openRegistrationModal(name);
         });
+      }
+    }
+
+    const copyShareButton = activityCard.querySelector(".copy-share-button");
+    if (copyShareButton) {
+      copyShareButton.addEventListener("click", async () => {
+        const didCopy = await copyToClipboard(shareUrl);
+        if (didCopy) {
+          showMessage("Share link copied to clipboard.", "success");
+        } else {
+          showMessage("Unable to copy link. Please copy it manually.", "error");
+        }
+      });
+    }
+
+    const nativeShareButton = activityCard.querySelector(".native-share-button");
+    if (nativeShareButton) {
+      if (navigator.share) {
+        nativeShareButton.addEventListener("click", async () => {
+          try {
+            await navigator.share({
+              title: `${name} - Mergington High School`,
+              text: shareText,
+              url: shareUrl,
+            });
+          } catch (error) {
+            if (error.name !== "AbortError") {
+              showMessage("Unable to open share options right now.", "error");
+            }
+          }
+        });
+      } else {
+        nativeShareButton.classList.add("hidden");
       }
     }
 
