@@ -43,6 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Authentication state
   let currentUser = null;
+  const supportsNativeShare = typeof navigator.share === "function";
 
   // Time range mappings for the dropdown
   const timeRanges = {
@@ -318,15 +319,6 @@ document.addEventListener("DOMContentLoaded", () => {
     )}.`;
   }
 
-  // Escape values before inserting into HTML attributes
-  function escapeHtmlAttribute(value) {
-    return String(value)
-      .replace(/&/g, "&amp;")
-      .replace(/"/g, "&quot;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-  }
-
   // Copy text to clipboard with fallback for older browsers
   async function copyToClipboard(text) {
     try {
@@ -550,8 +542,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const shareText = getActivityShareText(name, details);
     const encodedShareUrl = encodeURIComponent(shareUrl);
     const encodedShareText = encodeURIComponent(shareText);
-    const safeEncodedShareUrl = escapeHtmlAttribute(encodedShareUrl);
-    const safeEncodedShareText = escapeHtmlAttribute(encodedShareText);
 
     // Create activity tag
     const tagHtml = `
@@ -616,8 +606,7 @@ document.addEventListener("DOMContentLoaded", () => {
             Copy Link
           </button>
           <a
-            class="share-button social-share-link"
-            href="https://x.com/intent/tweet?text=${safeEncodedShareText}&url=${safeEncodedShareUrl}"
+            class="share-button social-share-link x-share-link"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Share ${name} on X"
@@ -625,8 +614,7 @@ document.addEventListener("DOMContentLoaded", () => {
             X
           </a>
           <a
-            class="share-button social-share-link"
-            href="https://www.facebook.com/sharer/sharer.php?u=${safeEncodedShareUrl}"
+            class="share-button social-share-link facebook-share-link"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Share ${name} on Facebook"
@@ -682,9 +670,25 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
+    const xShareLink = activityCard.querySelector(".x-share-link");
+    if (xShareLink) {
+      xShareLink.setAttribute(
+        "href",
+        `https://x.com/intent/tweet?text=${encodedShareText}&url=${encodedShareUrl}`
+      );
+    }
+
+    const facebookShareLink = activityCard.querySelector(".facebook-share-link");
+    if (facebookShareLink) {
+      facebookShareLink.setAttribute(
+        "href",
+        `https://www.facebook.com/sharer/sharer.php?u=${encodedShareUrl}`
+      );
+    }
+
     const nativeShareButton = activityCard.querySelector(".native-share-button");
     if (nativeShareButton) {
-      if (navigator.share) {
+      if (supportsNativeShare) {
         nativeShareButton.addEventListener("click", async () => {
           try {
             await navigator.share({
